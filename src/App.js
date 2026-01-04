@@ -1,11 +1,24 @@
 import './App.css';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function App() {
   const canvasRef = useRef(null);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
+    const onStart = (e) => {
+      if (!started && (e.code === 'Space' || e.key === ' ')) {
+        e.preventDefault();
+        setStarted(true);
+      }
+    };
+    window.addEventListener('keydown', onStart);
+    return () => window.removeEventListener('keydown', onStart);
+  }, [started]);
+
+  useEffect(() => {
+    if (!started) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -28,6 +41,8 @@ function App() {
 
     /* ================= INPUT ================= */
     const keys = {};
+    // ensure space is not treated as pressed from the start keydown
+    keys[' '] = false;
     const onKeyDown = (e) => {
       keys[e.key] = true;
     };
@@ -318,10 +333,10 @@ function App() {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, []);
+  }, [started]);
 
   return (
-    <div className="App">
+    <div className="App" style={{ position: 'relative', width: 900, height: 500 }}>
       <canvas
         ref={canvasRef}
         id="c"
@@ -329,6 +344,23 @@ function App() {
         height={500}
         data-testid="game-canvas"
       />
+      {!started && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            color: 'white',
+            fontFamily: 'monospace',
+            fontSize: 24,
+          }}
+        >
+          Press Space to Start
+        </div>
+      )}
     </div>
   );
 }
