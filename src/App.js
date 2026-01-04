@@ -79,7 +79,7 @@ function App() {
       h: 60,
       vx: 0,
       vy: 0,
-      hp: 50,
+      hp: 100,
     };
 
     /* ================= INPUT ================= */
@@ -88,6 +88,14 @@ function App() {
     keys[' '] = false;
     keys['Enter'] = false;
     const onKeyDown = (e) => {
+      if (isGameOver) {
+        if (e.key === 'Enter') {
+          resetRun();
+          isGameOver = false;
+          keys['Enter'] = false; // prevent immediate shoot
+        }
+        return;
+      }
       keys[e.key] = true;
     };
     const onKeyUp = (e) => {
@@ -114,6 +122,7 @@ function App() {
     let spawnTimer = 0;
 
     let flashTimer = 0;
+    let isGameOver = false;
 
     /* ================= ENEMIES ================= */
     const enemies = [];
@@ -198,7 +207,7 @@ function App() {
       kills = 0;
       growthLevel = 0;
 
-      player.hp = 50;
+      player.hp = 100;
       player.w = 80;
       player.h = 60;
       player.x = 100;
@@ -224,6 +233,8 @@ function App() {
 
     /* ================= GAME LOOP ================= */
     function update() {
+      if (isGameOver) return;
+
       // PLAYER MOVE
       player.vx = keys.a ? -4 : keys.d ? 4 : 0;
       // Jump with W
@@ -271,7 +282,9 @@ function App() {
           // keep all enemies on the ground (no vertical tracking)
 
           e.shootTimer++;
-          if (e.shootTimer > (e.type === 'boss' ? 20 : 60)) {
+          // Reduced fire rate by ~20% (increased delay by 25%)
+          // Boss: 20 -> 25, Others: 60 -> 75
+          if (e.shootTimer > (e.type === 'boss' ? 25 : 75)) {
             enemyBullets.push({
               x: e.x,
               y: e.y + 20,
@@ -341,7 +354,7 @@ function App() {
 
       // PLAYER DEATH
       if (player.hp <= 0) {
-        resetRun();
+        isGameOver = true;
       }
 
     }
@@ -402,6 +415,18 @@ function App() {
       ctx.fillText('Levels Beaten: ' + levelsBeaten, 20, 130);
       ctx.fillText('Best Level (Run): ' + bestLevel, 20, 155);
       ctx.fillText('Boss Level: ' + Math.floor(score / 1000), 20, 180);
+
+      if (isGameOver) {
+        ctx.fillStyle = 'red';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+        ctx.fillStyle = 'white';
+        ctx.font = '40px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('GAME OVER', WIDTH / 2, HEIGHT / 2 - 20);
+        ctx.font = '20px monospace';
+        ctx.fillText('Press Enter to Restart', WIDTH / 2, HEIGHT / 2 + 20);
+        ctx.textAlign = 'left';
+      }
     }
 
     /* ================= MAIN LOOP ================= */
