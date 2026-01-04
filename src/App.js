@@ -58,12 +58,25 @@ function App() {
     };
     window.addEventListener('resize', onResize);
 
+    /* ================= IMAGES ================= */
+    // Place these files in your 'public' folder
+    const sprites = {
+      player: new Image(),
+      ground: new Image(),
+      fly: new Image(),
+      boss: new Image(),
+    };
+    sprites.player.src = '/player.png';
+    sprites.ground.src = '/enemy.png';
+    sprites.fly.src = '/fly.png';
+    sprites.boss.src = '/boss.png';
+
     /* ================= PLAYER ================= */
     const player = {
       x: 100,
-      y: HEIGHT - 120,
-      w: 40,
-      h: 40,
+      y: HEIGHT - 140, // Adjusted for 60px height (floor is at HEIGHT-80)
+      w: 80,
+      h: 60,
       vx: 0,
       vy: 0,
       hp: 50,
@@ -106,9 +119,9 @@ function App() {
     const enemies = [];
 
     function spawnEnemy(type = 'ground') {
-      const w = type === 'boss' ? 120 : 40;
-      const h = type === 'boss' ? 120 : 40;
-      const groundY = HEIGHT - 120;
+      const w = type === 'boss' ? 100 : 60;
+      const h = type === 'boss' ? 100 : 60;
+      const groundY = HEIGHT - 80 - h; // Floor is at HEIGHT - 80
       const speed = type === 'boss' ? 1.5 : 2;
       
       // Calculate gravity so fly enemies land exactly at WIDTH / 2
@@ -186,10 +199,10 @@ function App() {
       growthLevel = 0;
 
       player.hp = 50;
-      player.w = 40;
-      player.h = 40;
+      player.w = 80;
+      player.h = 60;
       player.x = 100;
-      player.y = HEIGHT - 120;
+      player.y = HEIGHT - 140;
       player.vx = 0;
       player.vy = 0;
       bullets.length = 0;
@@ -214,12 +227,12 @@ function App() {
       // PLAYER MOVE
       player.vx = keys.a ? -4 : keys.d ? 4 : 0;
       // Jump with W
-      if (keys.w && player.y >= HEIGHT - 120) player.vy = -12;
+      if (keys.w && player.y >= HEIGHT - 140) player.vy = -12;
       player.vy += 0.6;
       player.x += player.vx;
       player.y += player.vy;
-      if (player.y > HEIGHT - 120) {
-        player.y = HEIGHT - 120;
+      if (player.y > HEIGHT - 140) {
+        player.y = HEIGHT - 140;
         player.vy = 0;
       }
 
@@ -248,7 +261,7 @@ function App() {
           if (e.type === 'fly') {
             e.vy += e.gravity;
             e.y += e.vy;
-            const groundY = HEIGHT - 120;
+            const groundY = HEIGHT - 80 - e.h;
             if (e.y > groundY) {
               e.y = groundY;
               e.vy = 0;
@@ -347,8 +360,12 @@ function App() {
       }
 
       // PLAYER
-      ctx.fillStyle = 'cyan';
-      ctx.fillRect(player.x, player.y, player.w, player.h);
+      if (sprites.player.complete && sprites.player.naturalWidth !== 0) {
+        ctx.drawImage(sprites.player, player.x, player.y, player.w, player.h);
+      } else {
+        ctx.fillStyle = 'cyan';
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+      }
 
       // BULLETS
       ctx.fillStyle = 'yellow';
@@ -361,9 +378,17 @@ function App() {
       // ENEMIES
       enemies.forEach((e) => {
         ctx.globalAlpha = e.fade;
-        ctx.fillStyle =
-          e.type === 'boss' ? 'darkred' : e.type === 'fly' ? 'purple' : 'red';
-        ctx.fillRect(e.x, e.y, e.w, e.h);
+        let sprite = sprites.ground;
+        if (e.type === 'fly') sprite = sprites.fly;
+        if (e.type === 'boss') sprite = sprites.boss;
+
+        if (sprite.complete && sprite.naturalWidth !== 0) {
+          ctx.drawImage(sprite, e.x, e.y, e.w, e.h);
+        } else {
+          ctx.fillStyle =
+            e.type === 'boss' ? 'darkred' : e.type === 'fly' ? 'purple' : 'red';
+          ctx.fillRect(e.x, e.y, e.w, e.h);
+        }
         ctx.globalAlpha = 1;
       });
 
