@@ -97,6 +97,19 @@ function App() {
         }
         return;
       }
+
+      // Shoot on Space (semi-automatic, no repeat)
+      if (e.key === ' ' && !e.repeat) {
+        for (let i = -2; i <= 2; i++) {
+          bullets.push({
+            x: player.x + player.w,
+            y: player.y + player.h / 2,
+            vx: 8,
+            vy: i * 0.5,
+          });
+        }
+      }
+
       keys[e.key] = true;
     };
     const onKeyUp = (e) => {
@@ -250,19 +263,7 @@ function App() {
       }
 
       // SHOOT (forward) - mapped to Space
-      if (player.shootTimer > 0) player.shootTimer--;
-      if (keys[' '] && player.shootTimer <= 0) {
-        // Fire 5 bullets in a spread
-        for (let i = -2; i <= 2; i++) {
-          bullets.push({
-            x: player.x + player.w,
-            y: player.y + player.h / 2,
-            vx: 8,
-            vy: i * 0.5, // Spread vertical velocity
-          });
-        }
-        player.shootTimer = 15; // Cooldown to prevent beam effect
-      }
+      // (Handled in onKeyDown for semi-automatic fire)
 
       bullets.forEach((b) => {
         b.x += b.vx;
