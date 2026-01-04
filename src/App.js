@@ -79,7 +79,8 @@ function App() {
       h: 60,
       vx: 0,
       vy: 0,
-      hp: 100,
+      hp: 200,
+      shootTimer: 0,
     };
 
     /* ================= INPUT ================= */
@@ -154,7 +155,7 @@ function App() {
         gravity,
         hp:
           type === 'boss'
-            ? 100 + Math.floor(score / 1000) * 100
+            ? 1000 + Math.floor(score / 1000) * 100
             : 20,
         speed,
         shootTimer: 0,
@@ -207,13 +208,14 @@ function App() {
       kills = 0;
       growthLevel = 0;
 
-      player.hp = 100;
+      player.hp = 200;
       player.w = 80;
       player.h = 60;
       player.x = 100;
       player.y = HEIGHT - 140;
       player.vx = 0;
       player.vy = 0;
+      player.shootTimer = 0;
       bullets.length = 0;
       enemyBullets.length = 0;
       enemies.length = 0;
@@ -248,16 +250,23 @@ function App() {
       }
 
       // SHOOT (forward) - mapped to Space
-      if (keys[' ']) {
-        bullets.push({
-          x: player.x + player.w,
-          y: player.y + player.h / 2 + (Math.random() * 6 - 3),
-          vx: 8,
-        });
+      if (player.shootTimer > 0) player.shootTimer--;
+      if (keys[' '] && player.shootTimer <= 0) {
+        // Fire 5 bullets in a spread
+        for (let i = -2; i <= 2; i++) {
+          bullets.push({
+            x: player.x + player.w,
+            y: player.y + player.h / 2,
+            vx: 8,
+            vy: i * 0.5, // Spread vertical velocity
+          });
+        }
+        player.shootTimer = 15; // Cooldown to prevent beam effect
       }
 
       bullets.forEach((b) => {
         b.x += b.vx;
+        if (b.vy) b.y += b.vy;
       });
 
       // SPAWN ENEMIES
@@ -283,8 +292,8 @@ function App() {
 
           e.shootTimer++;
           // Reduced fire rate by ~20% (increased delay by 25%)
-          // Boss: 20 -> 25, Others: 60 -> 75
-          if (e.shootTimer > (e.type === 'boss' ? 25 : 75)) {
+          // Boss: 20% faster than enemies (75 / 1.2 = 62.5 -> ~62)
+          if (e.shootTimer > (e.type === 'boss' ? 62 : 75)) {
             enemyBullets.push({
               x: e.x,
               y: e.y + 20,
