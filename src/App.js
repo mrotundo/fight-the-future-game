@@ -5,12 +5,28 @@ import { useEffect, useRef, useState } from 'react';
 function App() {
   const canvasRef = useRef(null);
   const [started, setStarted] = useState(false);
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    } catch (err) {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     const onStart = (e) => {
       if (!started && (e.code === 'Space' || e.key === ' ')) {
         e.preventDefault();
         setStarted(true);
+        return;
+      }
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
       }
     };
     window.addEventListener('keydown', onStart);
@@ -22,16 +38,30 @@ function App() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // make the canvas match the full viewport and stay responsive
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const WIDTH = canvas.width;
-    const HEIGHT = canvas.height;
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let WIDTH = canvas.width;
+    let HEIGHT = canvas.height;
+
+    const onResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      WIDTH = canvas.width;
+      HEIGHT = canvas.height;
+    };
+    window.addEventListener('resize', onResize);
 
     /* ================= PLAYER ================= */
     const player = {
       x: 100,
-      y: 380,
+      y: HEIGHT - 120,
       w: 40,
       h: 40,
       vx: 0,
@@ -78,7 +108,7 @@ function App() {
       enemies.push({
         type,
         x: WIDTH,
-        y: type === 'fly' ? 200 : 380,
+        y: type === 'fly' ? Math.min(200, HEIGHT - 200) : HEIGHT - 120,
         w: type === 'boss' ? 120 : 40,
         h: type === 'boss' ? 120 : 40,
         hp:
@@ -140,7 +170,7 @@ function App() {
       player.w = 40;
       player.h = 40;
       player.x = 100;
-      player.y = 380;
+      player.y = HEIGHT - 120;
       player.vx = 0;
       player.vy = 0;
       bullets.length = 0;
@@ -164,12 +194,12 @@ function App() {
     function update() {
       // PLAYER MOVE
       player.vx = keys.a ? -4 : keys.d ? 4 : 0;
-      if (keys.w && player.y >= 380) player.vy = -12;
+      if (keys.w && player.y >= HEIGHT - 120) player.vy = -12;
       player.vy += 0.6;
       player.x += player.vx;
       player.y += player.vy;
-      if (player.y > 380) {
-        player.y = 380;
+      if (player.y > HEIGHT - 120) {
+        player.y = HEIGHT - 120;
         player.vy = 0;
       }
 
@@ -271,6 +301,7 @@ function App() {
       if (player.hp <= 0) {
         resetRun();
       }
+
     }
 
     /* ================= DRAW ================= */
@@ -332,16 +363,16 @@ function App() {
       window.cancelAnimationFrame(rafId);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('resize', onResize);
     };
   }, [started]);
 
   return (
-    <div className="App" style={{ position: 'relative', width: 900, height: 500 }}>
+    <div className="App" style={{ position: 'relative', width: '100vw', height: '100vh' }}>
       <canvas
         ref={canvasRef}
         id="c"
-        width={900}
-        height={500}
+        
         data-testid="game-canvas"
       />
       {!started && (
