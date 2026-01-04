@@ -19,7 +19,7 @@ function App() {
 
   useEffect(() => {
     const onStart = (e) => {
-      if (!started && (e.code === 'Space' || e.key === ' ')) {
+      if (!started && (e.code === 'Enter' || e.key === 'Enter')) {
         e.preventDefault();
         setStarted(true);
         return;
@@ -105,17 +105,35 @@ function App() {
     const enemies = [];
 
     function spawnEnemy(type = 'ground') {
+      const w = type === 'boss' ? 120 : 40;
+      const h = type === 'boss' ? 120 : 40;
+      const groundY = HEIGHT - 120;
+      const speed = type === 'boss' ? 1.5 : 2;
+      
+      // Calculate gravity so fly enemies land exactly at WIDTH / 2
+      let gravity = 0;
+      if (type === 'fly') {
+        const startY = HEIGHT / 2;
+        const distY = groundY - startY;
+        const frames = (WIDTH / 2) / speed;
+        if (frames > 0) {
+          gravity = (2 * distY) / (frames * frames);
+        }
+      }
+
       enemies.push({
         type,
         x: WIDTH,
-        y: type === 'fly' ? Math.min(200, HEIGHT - 200) : HEIGHT - 120,
-        w: type === 'boss' ? 120 : 40,
-        h: type === 'boss' ? 120 : 40,
+        y: type === 'fly' ? HEIGHT / 2 : groundY, // fly enemies start at middle height
+        w,
+        h,
+        vy: 0, // vertical velocity for falling
+        gravity,
         hp:
           type === 'boss'
             ? 100 + Math.floor(score / 1000) * 100
             : 20,
-        speed: type === 'boss' ? 1.5 : 2,
+        speed,
         shootTimer: 0,
         dying: false,
         fade: 1,
@@ -224,9 +242,18 @@ function App() {
         if (!e.dying) {
           e.x -= e.speed;
 
+          // Apply gravity to fly enemies so they fall to ground
           if (e.type === 'fly') {
-            e.y += (player.y - e.y) * 0.02;
+            e.vy += e.gravity;
+            e.y += e.vy;
+            const groundY = HEIGHT - 120;
+            if (e.y > groundY) {
+              e.y = groundY;
+              e.vy = 0;
+            }
           }
+
+          // keep all enemies on the ground (no vertical tracking)
 
           e.shootTimer++;
           if (e.shootTimer > (e.type === 'boss' ? 20 : 60)) {
@@ -389,7 +416,7 @@ function App() {
             fontSize: 24,
           }}
         >
-          Press Space to Start
+          Press Enter to Start
         </div>
       )}
     </div>
