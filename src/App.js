@@ -71,8 +71,9 @@ function App() {
 
     /* ================= INPUT ================= */
     const keys = {};
-    // ensure space is not treated as pressed from the start keydown
+    // ensure space/enter are not treated as pressed from the start keydown
     keys[' '] = false;
+    keys['Enter'] = false;
     const onKeyDown = (e) => {
       keys[e.key] = true;
     };
@@ -212,6 +213,7 @@ function App() {
     function update() {
       // PLAYER MOVE
       player.vx = keys.a ? -4 : keys.d ? 4 : 0;
+      // Jump with W
       if (keys.w && player.y >= HEIGHT - 120) player.vy = -12;
       player.vy += 0.6;
       player.x += player.vx;
@@ -221,7 +223,7 @@ function App() {
         player.vy = 0;
       }
 
-      // SHOOT (forward)
+      // SHOOT (forward) - mapped to Space
       if (keys[' ']) {
         bullets.push({
           x: player.x + player.w,
